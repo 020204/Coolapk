@@ -287,12 +287,12 @@ class _TopicPageState extends State<TopicPage> with TickerProviderStateMixin {
                       PopupMenuItem(
                         value: TopicMenuItem.Follow,
                         child: Text(
-                            _topicController.isFollow ? 'UnFollow' : 'Follow'),
+                            _topicController.isFollow ? '取消关注' : '关注'),
                       ),
                       PopupMenuItem(
                         value: TopicMenuItem.Block,
                         child: Text(
-                            _topicController.isBlocked ? 'UnBlock' : 'Block'),
+                            _topicController.isBlocked ? '取消屏蔽' : '屏蔽'),
                       ),
                     ],
                   ),
