@@ -265,11 +265,11 @@ class _TopicPageState extends State<TopicPage> with TickerProviderStateMixin {
                     itemBuilder: (context) => [
                       PopupMenuItem(
                         value: TopicMenuItem.Copy,
-                        child: Text(TopicMenuItem.Copy.name),
+                        child: Text('复制'),
                       ),
                       PopupMenuItem(
                         value: TopicMenuItem.Share,
-                        child: Text(TopicMenuItem.Share.name),
+                        child: Text('分享'),
                       ),
                       if (_shouldShowActions)
                         PopupMenuItem(
