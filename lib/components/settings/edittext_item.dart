@@ -62,15 +62,19 @@ class EdittextItemState extends State<EdittextItem> {
       leading: widget.icon != null ? Icon(widget.icon) : null,
       title: Text(widget.title),
       subtitle: value.isNotEmpty ? Text(value) : null,
-      onTap: () => showDialog<void>(
-        context: context,
-        builder: (context) {
-          return EditTextDialog(
-            title: widget.title,
-            defaultText: value,
-            setData: onChanged,
-          );
-        },
+      onTap: () => _showBottomSheet(context),
+    );
+  }
+
+  void _showBottomSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => EditTextBottomSheet(
+        title: widget.title,
+        defaultText: value,
+        setData: onChanged,
       ),
     );
   }
