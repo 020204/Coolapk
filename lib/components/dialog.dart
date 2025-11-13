@@ -65,6 +65,8 @@ class _SliderDialogState extends State<SliderDialog> {
   }
 }
 
+
+
 class EditTextDialog extends StatefulWidget {
   const EditTextDialog({
     super.key,
@@ -81,18 +83,44 @@ class EditTextDialog extends StatefulWidget {
   State<EditTextDialog> createState() => _EditTextDialogState();
 }
 
-class _EditTextDialogState extends State<EditTextDialog> {
+class _EditTextDialogState extends State<EditTextDialog>
+    with SingleTickerProviderStateMixin {
   late TextEditingController controller;
   final FocusNode _focusNode = FocusNode();
+  late AnimationController _animationController;
+  late Animation<Offset> _offsetAnimation;
 
   @override
   void initState() {
     super.initState();
     controller = TextEditingController(text: widget.defaultText);
-    // 延迟请求焦点，先弹出面板再弹出键盘，避免掉帧
-    Future.delayed(const Duration(milliseconds: 150), () {
+
+    // 初始化滑入动画
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+    _offsetAnimation = Tween(begin: const Offset(0, 1), end: Offset.zero)
+        .animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    // 启动滑入动画
+    _animationController.forward();
+
+    // 延迟聚焦，避免键盘与面板同时弹出造成抖动
+    Future.delayed(const Duration(milliseconds: 250), () {
       if (mounted) _focusNode.requestFocus();
     });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    controller.dispose();
+    _animationController.dispose();
+    super.dispose();
   }
 
   void confirm() {
@@ -102,50 +130,65 @@ class _EditTextDialogState extends State<EditTextDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: MediaQuery.of(context).viewInsets, // 跟随键盘上移
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).dialogBackgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          ),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(widget.title,
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                focusNode: _focusNode,
-                autofocus: false, // 我们手动控制焦点
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) => confirm(),
-                decoration: InputDecoration(
-                  hintText: '请输入内容...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
+
+    return SlideTransition(
+      position: _offsetAnimation,
+      child: SafeArea(
+        child: AnimatedPadding(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(bottom: bottom),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).dialogBackgroundColor,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(18)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10,
+                  offset: Offset(0, -2),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(widget.title,
+                    style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: controller,
+                  focusNode: _focusNode,
+                  autofocus: false,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => confirm(),
+                  decoration: InputDecoration(
+                    hintText: '请输入内容',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: const Text('取消'),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: confirm,
-                    child: const Text('确认'),
-                  ),
-                ],
-              ),
-            ],
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: const Text('取消'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: confirm,
+                      child: const Text('确认'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
