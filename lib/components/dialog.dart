@@ -65,8 +65,8 @@ class _SliderDialogState extends State<SliderDialog> {
   }
 }
 
-class EditTextDialog extends StatelessWidget {
-  const EditTextDialog({
+class EditTextBottomSheet extends StatefulWidget {
+  const EditTextBottomSheet({
     super.key,
     required this.title,
     required this.defaultText,
@@ -78,46 +78,102 @@ class EditTextDialog extends StatelessWidget {
   final Function(String value) setData;
 
   @override
+  State<EditTextBottomSheet> createState() => _EditTextBottomSheetState();
+}
+
+class _EditTextBottomSheetState extends State<EditTextBottomSheet> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.defaultText);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onConfirm() {
+    widget.setData(_controller.text);
+    Navigator.pop(context);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    TextEditingController controller = TextEditingController.fromValue(
-      TextEditingValue(
-        text: defaultText,
-        selection: TextSelection.fromPosition(
-          TextPosition(
-              affinity: TextAffinity.downstream, offset: defaultText.length),
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 16,
+        right: 16,
+        top: 16,
+      ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
         ),
       ),
-    );
-    return AlertDialog(
-      title: Center(child: Text(title)),
-      content: TextField(
-        autofocus: true,
-        controller: controller,
-        onSubmitted: (value) {
-          setData(value);
-          Navigator.pop(context);
-        },
-        decoration: InputDecoration(
-          border: OutlineInputBorder(
-            borderSide:
-                BorderSide(color: Theme.of(context).colorScheme.primary),
-            borderRadius: const BorderRadius.all(Radius.circular(4.0)),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
           ),
-        ),
+          const SizedBox(height: 16),
+          Text(
+            widget.title,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            autofocus: true,
+            controller: _controller,
+            onSubmitted: (value) => _onConfirm(),
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderSide:
+                    BorderSide(color: Theme.of(context).colorScheme.primary),
+                borderRadius: const BorderRadius.all(Radius.circular(8.0)),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('取消'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton(
+                  onPressed: _onConfirm,
+                  child: const Text('确定'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Get.back(),
-          child: const Text('取消'),
-        ),
-        TextButton(
-          onPressed: () {
-            setData(controller.text);
-            Get.back();
-          },
-          child: const Text('确定'),
-        ),
-      ],
     );
   }
 }
