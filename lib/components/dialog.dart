@@ -65,7 +65,7 @@ class _SliderDialogState extends State<SliderDialog> {
   }
 }
 
-class EditTextDialog extends StatelessWidget {
+class EditTextDialog extends StatefulWidget {
   const EditTextDialog({
     super.key,
     required this.title,
@@ -78,46 +78,62 @@ class EditTextDialog extends StatelessWidget {
   final Function(String value) setData;
 
   @override
+  State<EditTextDialog> createState() => _EditTextDialogState();
+}
+
+class _EditTextDialogState extends State<EditTextDialog> {
+  late TextEditingController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = TextEditingController(text: widget.defaultText);
+  }
+
+  void confirm() {
+    widget.setData(controller.text);
+    Navigator.pop(context);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    TextEditingController controller = TextEditingController.fromValue(
-      TextEditingValue(
-        text: defaultText,
-        selection: TextSelection.fromPosition(
-          TextPosition(
-              affinity: TextAffinity.downstream, offset: defaultText.length),
-        ),
-      ),
-    );
-    return AlertDialog(
-      title: Center(child: Text(title)),
-      content: TextField(
-        autofocus: true,
-        controller: controller,
-        onSubmitted: (value) {
-          setData(value);
-          Navigator.pop(context);
-        },
-        decoration: InputDecoration(
-          border: OutlineInputBorder(
-            borderSide:
-                BorderSide(color: Theme.of(context).colorScheme.primary),
-            borderRadius: const BorderRadius.all(Radius.circular(4.0)),
+    final mediaQuery = MediaQuery.of(context);
+    final bottomInset = mediaQuery.viewInsets.bottom;
+
+    return AnimatedPadding(
+      padding: EdgeInsets.only(bottom: bottomInset), // 动态跟随键盘高度
+      duration: const Duration(milliseconds: 100),
+      child: MediaQuery.removeViewInsets(
+        removeLeft: true,
+        removeTop: true,
+        removeRight: true,
+        removeBottom: true,
+        context: context,
+        child: AlertDialog(
+          title: Center(child: Text(widget.title)),
+          content: TextField(
+            autofocus: true,
+            controller: controller,
+            onSubmitted: (value) => confirm(),
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+                borderRadius: const BorderRadius.all(Radius.circular(4.0)),
+              ),
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: confirm,
+              child: const Text('确认'),
+            ),
+          ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Get.back(),
-          child: const Text('取消'),
-        ),
-        TextButton(
-          onPressed: () {
-            setData(controller.text);
-            Get.back();
-          },
-          child: const Text('确定'),
-        ),
-      ],
     );
   }
 }
