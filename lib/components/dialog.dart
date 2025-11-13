@@ -83,55 +83,70 @@ class EditTextDialog extends StatefulWidget {
 
 class _EditTextDialogState extends State<EditTextDialog> {
   late TextEditingController controller;
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
     controller = TextEditingController(text: widget.defaultText);
+    // 延迟请求焦点，先弹出面板再弹出键盘，避免掉帧
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (mounted) _focusNode.requestFocus();
+    });
   }
 
   void confirm() {
-    widget.setData(controller.text);
-    Navigator.pop(context);
+    widget.setData(controller.text.trim());
+    Get.back();
   }
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final bottomInset = mediaQuery.viewInsets.bottom;
-
-    return AnimatedPadding(
-      padding: EdgeInsets.only(bottom: bottomInset), // 动态跟随键盘高度
-      duration: const Duration(milliseconds: 100),
-      child: MediaQuery.removeViewInsets(
-        removeLeft: true,
-        removeTop: true,
-        removeRight: true,
-        removeBottom: true,
-        context: context,
-        child: AlertDialog(
-          title: Center(child: Text(widget.title)),
-          content: TextField(
-            autofocus: true,
-            controller: controller,
-            onSubmitted: (value) => confirm(),
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-                borderRadius: const BorderRadius.all(Radius.circular(4.0)),
-              ),
-            ),
+    return SafeArea(
+      child: Padding(
+        padding: MediaQuery.of(context).viewInsets, // 跟随键盘上移
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).dialogBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('取消'),
-            ),
-            TextButton(
-              onPressed: confirm,
-              child: const Text('确认'),
-            ),
-          ],
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(widget.title,
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                focusNode: _focusNode,
+                autofocus: false, // 我们手动控制焦点
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => confirm(),
+                decoration: InputDecoration(
+                  hintText: '请输入内容...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: const Text('取消'),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    onPressed: confirm,
+                    child: const Text('确认'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
